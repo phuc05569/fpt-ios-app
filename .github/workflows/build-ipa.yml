@@ -1,0 +1,170 @@
+name: Build unsigned IPA
+
+# Manual trigger only: GitHub -> Actions -> "Build unsigned IPA" -> Run workflow.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SCHEME: Campus                         # shared scheme in Campus.xcodeproj
+  APP_NAME: Campus                       # PRODUCT_NAME = target name, so the bundle is Campus.app
+  EXPECTED_BUNDLE_ID: com.phuchoang.fpt
+  EXPECTED_DISPLAY_NAME: FPT
+  MIN_IOS: "18.3"                        # must match IPHONEOS_DEPLOYMENT_TARGET in the project
+  IPA_NAME: FPT-unsigned.ipa
+
+jobs:
+  build-ipa:
+    name: Archive and package unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode (iOS SDK must be >= 18.3)
+        run: |
+          set -euo pipefail
+          chosen=""
+          fallback="no"
+          # Xcode 16.3+ is the first with an iOS 18.3+ SDK. Prefer 16.4, then 16.3.
+          for v in 16.4 16.3; do
+            if [ -d "/Applications/Xcode_${v}.app" ]; then chosen="/Applications/Xcode_${v}.app"; break; fi
+          done
+          # Otherwise take the newest Xcode on the image; the SDK check below decides if it is usable.
+          if [ -z "$chosen" ]; then
+            chosen="$(for d in /Applications/Xcode_*.app; do if [ -d "$d" ]; then echo "$d"; fi; done | sort -V | tail -n 1)"
+            fallback="yes"
+          fi
+          if [ -z "$chosen" ]; then
+            echo "::error::No Xcode_*.app found in /Applications on this runner image."
+            ls /Applications
+            exit 1
+          fi
+          if [ "$fallback" = "yes" ]; then
+            echo "::warning::Xcode 16.4/16.3 not on this image; falling back to $chosen"
+          fi
+          sudo xcode-select -s "$chosen/Contents/Developer"
+          xcodebuild -version
+          sdk="$(xcrun --sdk iphoneos --show-sdk-version)"
+          echo "iphoneos SDK: $sdk (need >= $MIN_IOS)"
+          lowest="$(printf '%s\n%s\n' "$sdk" "$MIN_IOS" | sort -V | sed -n 1p)"
+          if [ "$lowest" != "$MIN_IOS" ]; then
+            echo "::error::iphoneos SDK $sdk is older than the project's deployment target $MIN_IOS."
+            exit 1
+          fi
+
+      - name: Locate Campus.xcodeproj
+        run: |
+          set -euo pipefail
+          found="$(find . -maxdepth 3 -name 'Campus.xcodeproj' -type d)"
+          found="${found%%$'\n'*}"
+          if [ -z "$found" ]; then
+            echo "::error::Campus.xcodeproj not found. Upload the CONTENTS of the Campus folder to the repository root (see README)."
+            ls -la
+            exit 1
+          fi
+          echo "Using project: $found"
+          echo "PROJECT_PATH=$found" >> "$GITHUB_ENV"
+          echo "BUILD_DIR=$RUNNER_TEMP/build" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/build"
+
+      - name: Archive for iPhone (arm64, code signing disabled)
+        run: |
+          set -euo pipefail
+          xcodebuild archive \
+            -project "$PROJECT_PATH" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$BUILD_DIR/Campus.xcarchive" \
+            -derivedDataPath "$BUILD_DIR/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            2>&1 | tee "$BUILD_DIR/xcodebuild.log"
+
+      - name: Show compile errors
+        if: failure()
+        run: |
+          log="${BUILD_DIR:-}/xcodebuild.log"
+          if [ -f "$log" ]; then
+            echo "::group::Errors found in xcodebuild.log"
+            grep -E "error:|ARCHIVE FAILED|BUILD FAILED" "$log" || true
+            echo "::endgroup::"
+            grep -E " error: " "$log" | sed -n '1,20p' | while IFS= read -r line; do
+              echo "::error::$line"
+            done || true
+          else
+            echo "::error::No xcodebuild.log was produced; a step before the archive failed."
+          fi
+
+      - name: Verify the archived app is a real iPhone build
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          app="$BUILD_DIR/Campus.xcarchive/Products/Applications/${APP_NAME}.app"
+          [ -d "$app" ] || fail "Archive has no ${APP_NAME}.app at $app"
+          bin="$app/${APP_NAME}"
+          [ -f "$bin" ] || fail "No compiled executable at $bin"
+
+          file "$bin"
+          archs="$(lipo -archs "$bin")"
+          echo "architectures: $archs"
+          case " $archs " in *" arm64 "*) ;; *) fail "Executable is not arm64 (got: $archs)";; esac
+
+          build_info="$(xcrun vtool -show-build "$bin")"
+          echo "$build_info"
+          grep -Eq 'platform IOS$' <<< "$build_info" || fail "Executable is not built for the iOS device platform (simulator build?)"
+          grep -Eq "minos ${MIN_IOS}\$" <<< "$build_info" || fail "Executable minimum OS is not ${MIN_IOS}"
+
+          plist="$app/Info.plist"
+          pb=/usr/libexec/PlistBuddy
+          bundle_id="$($pb -c 'Print :CFBundleIdentifier' "$plist")"
+          display="$($pb -c 'Print :CFBundleDisplayName' "$plist")"
+          min_os="$($pb -c 'Print :MinimumOSVersion' "$plist")"
+          echo "CFBundleIdentifier=$bundle_id  CFBundleDisplayName=$display  MinimumOSVersion=$min_os"
+          [ "$bundle_id" = "$EXPECTED_BUNDLE_ID" ] || fail "Bundle id is '$bundle_id', expected '$EXPECTED_BUNDLE_ID'"
+          [ "$display" = "$EXPECTED_DISPLAY_NAME" ] || fail "Display name is '$display', expected '$EXPECTED_DISPLAY_NAME'"
+          [ "$min_os" = "$MIN_IOS" ] || fail "MinimumOSVersion is '$min_os', expected '$MIN_IOS'"
+
+      - name: Package Payload/Campus.app into an IPA
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+          app="$BUILD_DIR/Campus.xcarchive/Products/Applications/${APP_NAME}.app"
+          stage="$RUNNER_TEMP/ipa-stage"
+          ipa="$GITHUB_WORKSPACE/$IPA_NAME"
+          rm -rf "$stage" "$ipa"
+          mkdir -p "$stage/Payload"
+          cp -R "$app" "$stage/Payload/"
+          (cd "$stage" && zip -qry "$ipa" Payload)
+
+          unzip -tq "$ipa"
+          entries="$(unzip -Z1 "$ipa")"
+          grep -Fxq "Payload/${APP_NAME}.app/${APP_NAME}" <<< "$entries" || fail "IPA is missing the compiled executable"
+          grep -Fxq "Payload/${APP_NAME}.app/Info.plist" <<< "$entries" || fail "IPA is missing Info.plist"
+          ls -lh "$ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FPT-ipa
+          path: ${{ github.workspace }}/${{ env.IPA_NAME }}
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ${{ runner.temp }}/build/xcodebuild.log
+          if-no-files-found: ignore
+          retention-days: 7
