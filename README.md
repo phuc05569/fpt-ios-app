@@ -1,6 +1,7 @@
 # FPT (Xcode project: Campus)
 
-SwiftUI iOS app for FPT students. Currently implemented: the Mark Report screen, using mock data.
+SwiftUI iOS app for FPT students. Implemented: Weekly timetable, Attendance report and Mark Report, all driven by one
+mock course/schedule data set (`MockStudentService`). Attendance updates automatically as class times pass.
 The Xcode project, target and scheme are named `Campus`. The app installs as **FPT**
 (bundle id `com.phuchoang.fpt`, iOS 18.3 or later).
 

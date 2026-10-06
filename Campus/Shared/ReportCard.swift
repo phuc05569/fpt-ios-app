@@ -4,11 +4,12 @@ import SwiftUI
 /// Measured from the screenshots: 4pt bar, 14pt padding, 15pt corner radius, no shadow.
 struct ReportCard<Content: View>: View {
     let accent: Color
+    var verticalPadding: CGFloat = 14
     @ViewBuilder let content: Content
 
     var body: some View {
         content
-            .padding(.vertical, 14)
+            .padding(.vertical, verticalPadding)
             .padding(.trailing, 14)
             .padding(.leading, 18)   // 4pt bar + 14pt padding
             .frame(maxWidth: .infinity, alignment: .leading)

@@ -1,25 +1,28 @@
 import Foundation
 import Observation
 
+/// Shared by the Timetable and Attendance screens: both show the selected semester's courses.
 @MainActor @Observable
-final class MarkReportViewModel {
+final class CourseListViewModel {
     private(set) var semesters: [Semester] = []
     var selected: Semester?
-    private(set) var state: LoadState<[CourseMark]> = .loading
+    private(set) var state: LoadState<[Course]> = .loading
 
     private let service: any StudentService
-    private let startingSemester: String
 
-    /// Opens on the current semester, the one the timetable and attendance screens show.
-    init(service: any StudentService, startingSemester: String = "FALL2026") {
+    init(service: any StudentService) {
         self.service = service
-        self.startingSemester = startingSemester
+    }
+
+    var courses: [Course] {
+        if case .loaded(let courses) = state { return courses }
+        return []
     }
 
     func loadSemesters() async {
         do {
             semesters = try await service.semesters()
-            selected = semesters.first { $0.name == startingSemester } ?? semesters.first
+            selected = semesters.first
             if selected == nil { state = .loaded([]) }
         } catch is CancellationError {
             // View went away; nothing to report.
@@ -28,11 +31,11 @@ final class MarkReportViewModel {
         }
     }
 
-    func loadMarks() async {
+    func loadCourses() async {
         guard let semester = selected else { return }
         state = .loading
         do {
-            state = .loaded(try await service.marks(for: semester))
+            state = .loaded(try await service.courses(for: semester))
         } catch is CancellationError {
             // Superseded by a newer selection.
         } catch {
@@ -45,7 +48,7 @@ final class MarkReportViewModel {
             state = .loading
             await loadSemesters()
         } else {
-            await loadMarks()
+            await loadCourses()
         }
     }
 }

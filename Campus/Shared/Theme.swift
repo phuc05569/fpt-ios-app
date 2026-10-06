@@ -16,6 +16,13 @@ enum Theme {
     static let tabIcon = Color(hex: 0x818C9B)
     static let tabSelected = Color(hex: 0x3A3D3F)
 
+    // Timetable (sampled from the Weekly timetable screenshots)
+    static let slotThree = Color(hex: 0xE06822)
+    static let slotFour = Color(hex: 0x160BE0)
+    static let statusGrey = Color(hex: 0x808080)      // "NOT YET" pill and the week-strip hairlines
+    static let textTertiary = Color(hex: 0x9CA3AF)    // times and the "Room" label
+    static let present = Color(hex: 0x059669)         // "PRESENT" pill: assumption, not visible in the screenshots
+
     static let cardRadius: CGFloat = 15
 }
 
