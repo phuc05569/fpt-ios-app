@@ -83,6 +83,8 @@ struct Course: Identifiable, Hashable, Codable {
     let startDay: CalendarDay
     let endDay: CalendarDay
     let meetings: [Meeting]
+    /// Days with no class (e.g. an exam week). Skipped when sessions are generated. Empty by default.
+    var breakDays: [CalendarDay] = []
     /// Published final average. `nil` until the course is graded.
     let finalMark: Double?
 

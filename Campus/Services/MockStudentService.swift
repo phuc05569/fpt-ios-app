@@ -50,22 +50,55 @@ struct MockStudentService: StudentService {
                finalMark: 7.5),
     ]
 
-    private static let coursesBySemester: [String: [Course]] = [
-        "FALL2026": fall2026Courses,
+    // SUMMER2026, class IA2102: a completed semester (all sessions are in the past).
+    // From the reference screenshots: course codes, names, class names and start/end dates
+    // (VOV124's dates are cut off in the screenshot and are assumed to match SSA101).
+    // The meeting days follow from the start/end weekdays (Mon+Thu, Tue+Fri, Wed+Sat).
+    // ASSUMED, not in any screenshot: rooms, slots, lecturers, the break week and the final marks.
+    // The break week (15-21 June) makes each course 20 sessions, matching the "/20" in the reference attendance.
+    private static let summerBreak = ScheduleCalendar.week(containing: CalendarDay(2026, 6, 15))
+
+    static let summer2026Courses: [Course] = [
+        Course(code: "CEA201", name: "Computer Organization and Architecture", className: "IA2102", lecturer: "khoand2",
+               startDay: CalendarDay(2026, 5, 13), endDay: CalendarDay(2026, 7, 25),
+               meetings: [Meeting(weekday: .wednesday, slot: .three, room: "P.201"),
+                          Meeting(weekday: .saturday, slot: .three, room: "P.201")],
+               breakDays: summerBreak, finalMark: 7.0),
+        Course(code: "CSI106", name: "Introduction to Computer Science", className: "IA2102", lecturer: "hanvt5",
+               startDay: CalendarDay(2026, 5, 11), endDay: CalendarDay(2026, 7, 23),
+               meetings: [Meeting(weekday: .monday, slot: .three, room: "P.304"),
+                          Meeting(weekday: .thursday, slot: .three, room: "P.304")],
+               breakDays: summerBreak, finalMark: 8.0),
+        Course(code: "MAE101", name: "Mathematics for Engineering", className: "IA2102", lecturer: "tuanlq3",
+               startDay: CalendarDay(2026, 5, 13), endDay: CalendarDay(2026, 7, 25),
+               meetings: [Meeting(weekday: .wednesday, slot: .four, room: "P.201"),
+                          Meeting(weekday: .saturday, slot: .four, room: "P.201")],
+               breakDays: summerBreak, finalMark: 6.8),
+        Course(code: "PFP191", name: "Programming Fundamentals with Python", className: "IA2102", lecturer: "namph4",
+               startDay: CalendarDay(2026, 5, 11), endDay: CalendarDay(2026, 7, 23),
+               meetings: [Meeting(weekday: .monday, slot: .four, room: "P.304"),
+                          Meeting(weekday: .thursday, slot: .four, room: "P.304")],
+               breakDays: summerBreak, finalMark: 7.6),
+        Course(code: "SSA101", name: "Academic skills", className: "IA2102", lecturer: "lanpt8",
+               startDay: CalendarDay(2026, 5, 12), endDay: CalendarDay(2026, 7, 24),
+               meetings: [Meeting(weekday: .tuesday, slot: .three, room: "P.402"),
+                          Meeting(weekday: .friday, slot: .three, room: "P.402")],
+               breakDays: summerBreak, finalMark: 7.4),
+        Course(code: "VOV124", name: "Vovinam 2/3", className: "H1_VOV124_4B", lecturer: "binhnk",
+               startDay: CalendarDay(2026, 5, 12), endDay: CalendarDay(2026, 7, 24),
+               meetings: [Meeting(weekday: .tuesday, slot: .four, room: "P.G01"),
+                          Meeting(weekday: .friday, slot: .four, room: "P.G01")],
+               breakDays: summerBreak, finalMark: 6.5),
     ]
 
-    // MARK: - Marks of semesters without schedule data (copied from the reference screenshots)
+    private static let coursesBySemester: [String: [Course]] = [
+        "FALL2026": fall2026Courses,
+        "SUMMER2026": summer2026Courses,
+    ]
+
+    // MARK: - Marks of semesters that have no schedule data yet (copied from the reference screenshots)
 
     private static let archivedMarks: [String: [CourseMark]] = [
-        "SUMMER2026": [
-            mark("CEA201", "Computer Organization and Architecture", "IA2102", 0.0),
-            mark("CSI106", "Introduction to Computer Science", "IA2102", 1.2),
-            mark("MAE101", "Mathematics for Engineering", "IA2102", 0.2),
-            mark("PFP191", "Programming Fundamentals with Python", "IA2102", 0.0),
-            mark("SSA101", "Academic skills", "IA2102", 0.0),
-            // Average is cut off in the screenshot; 0.0 is an assumption.
-            mark("VOV124", "Vovinam 2/3", "H1_VOV124_4B", 0.0),
-        ],
         "SPRING2026": [
             CourseMark(courseCode: "ENT503_Malaysia", courseName: "", className: "H1_SP26_MALAYSIA",
                        average: nil, status: .exempted),

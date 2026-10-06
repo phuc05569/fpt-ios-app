@@ -15,9 +15,23 @@ struct HomeView: View {
             .padding(16)
         }
         .background(Theme.canvas.ignoresSafeArea())
-        .navigationTitle("Home")
+        .navigationTitle("Home")   // kept so pushed screens show "< Home"; the header below replaces the visible title
         .navigationBarTitleDisplayMode(.inline)
         .navyNavigationBar()
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Color.clear.frame(width: 1, height: 1)   // suppresses the centred inline title
+            }
+            ToolbarItem(placement: .topBarLeading) {
+                HomeProfileHeader()
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Image(systemName: "bell.fill")
+                    .font(.system(size: 19))
+                    .foregroundStyle(Color.white)
+                    .accessibilityLabel("Notifications")
+            }
+        }
     }
 
     private func row<Destination: View>(_ title: String,

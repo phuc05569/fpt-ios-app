@@ -21,6 +21,7 @@ enum Theme {
     static let slotFour = Color(hex: 0x160BE0)
     static let statusGrey = Color(hex: 0x808080)      // "NOT YET" pill and the week-strip hairlines
     static let textTertiary = Color(hex: 0x9CA3AF)    // times and the "Room" label
+    static let headerSubtitle = Color(hex: 0x91A3BD)  // "FPT University" in the Home header (sampled)
     static let present = Color(hex: 0x059669)         // "PRESENT" pill: assumption, not visible in the screenshots
 
     static let cardRadius: CGFloat = 15

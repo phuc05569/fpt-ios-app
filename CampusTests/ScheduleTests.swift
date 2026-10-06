@@ -124,4 +124,88 @@ struct ScheduleTests {
         }
         #expect(Set(marks.compactMap(\.average)).count == marks.count)   // distinct scores
     }
+
+    // MARK: - Summer 2026 (completed semester, same shared data as marks and attendance)
+
+    private let summer = MockStudentService.summer2026Courses
+    private let afterSummer = ScheduleCalendar.date(of: CalendarDay(2026, 10, 5), minutes: 15 * 60 + 47)
+
+    @Test func summerHasSixCoursesWithTwentySessionsEach() {
+        #expect(summer.map(\.code) == ["CEA201", "CSI106", "MAE101", "PFP191", "SSA101", "VOV124"])
+        for course in summer {
+            #expect(ScheduleCalendar.sessions(of: course).count == 20)
+        }
+    }
+
+    @Test func summerBreakWeekHasNoClasses() {
+        let week = ScheduleCalendar.week(containing: CalendarDay(2026, 6, 15))
+        #expect(ScheduleCalendar.sessions(of: summer, in: week).isEmpty)
+        // The weeks around it are normal.
+        let before = ScheduleCalendar.week(containing: CalendarDay(2026, 6, 8))
+        #expect(!ScheduleCalendar.sessions(of: summer, in: before).isEmpty)
+    }
+
+    @Test func summerSessionsAreAllHistoricalAndPresent() {
+        for course in summer {
+            for session in ScheduleCalendar.sessions(of: course) {
+                #expect(session.state(at: afterSummer) == .completed)
+                #expect(session.isPresent(at: afterSummer))   // never "Not Yet"
+            }
+            let attendance = ScheduleCalendar.attendance(of: course, at: afterSummer)
+            #expect(attendance.held == 20)
+            #expect(attendance.attended == 20)
+            #expect(attendance.percent == 100)
+        }
+    }
+
+    @Test func summerDatesMatchTheReferenceAttendance() {
+        let expected: [String: (CalendarDay, CalendarDay)] = [
+            "CEA201": (CalendarDay(2026, 5, 13), CalendarDay(2026, 7, 25)),
+            "CSI106": (CalendarDay(2026, 5, 11), CalendarDay(2026, 7, 23)),
+            "MAE101": (CalendarDay(2026, 5, 13), CalendarDay(2026, 7, 25)),
+            "PFP191": (CalendarDay(2026, 5, 11), CalendarDay(2026, 7, 23)),
+            "SSA101": (CalendarDay(2026, 5, 12), CalendarDay(2026, 7, 24)),
+        ]
+        for course in summer {
+            guard let (start, end) = expected[course.code] else { continue }   // VOV124 is not readable in the screenshot
+            let all = ScheduleCalendar.sessions(of: course)
+            #expect(all.first?.day == start)
+            #expect(all.last?.day == end)
+        }
+    }
+
+    @Test func summerMarksComeFromTheSameCoursesAndTheGradingRule() async throws {
+        let service = MockStudentService(delay: .zero)
+        let marks = try await service.marks(for: Semester(name: "SUMMER2026"))
+        #expect(marks.count == summer.count)
+        for course in summer {
+            let mark = marks.first { $0.courseCode == course.code }
+            #expect(mark?.courseName == course.name)
+            #expect(mark?.className == course.className)
+            #expect(mark?.average == course.finalMark)
+            #expect(mark == CourseMark(course: course))   // status comes from the grading rule, not from UI
+            #expect((6.0...8.0).contains(mark?.average ?? 0))
+        }
+        let attendanceCourses = try await service.courses(for: Semester(name: "SUMMER2026"))
+        #expect(attendanceCourses == summer)   // Attendance reads the very same dataset
+    }
+
+    @Test func gradingRuleDecidesPassedAndNotPassed() {
+        func status(_ mark: Double?) -> CourseMark.Status {
+            var course = summer[0]
+            course = Course(code: course.code, name: course.name, className: course.className, lecturer: course.lecturer,
+                            startDay: course.startDay, endDay: course.endDay, meetings: course.meetings,
+                            breakDays: course.breakDays, finalMark: mark)
+            return CourseMark(course: course).status
+        }
+        #expect(status(4.9) == .notPassed)
+        #expect(status(5.0) == .passed)
+        #expect(status(nil) == .notPassed)
+    }
+
+    @Test func courseDefinitionsAreNotDuplicated() {
+        let all = courses + summer
+        #expect(Set(all.map(\.id)).count == all.count)
+        #expect(Set(all.map(\.code)).count == all.count)
+    }
 }

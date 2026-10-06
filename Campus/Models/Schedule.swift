@@ -97,9 +97,11 @@ enum ScheduleCalendar {
         var cursor = course.startDay
         while cursor <= course.endDay {
             let weekday = Self.weekday(of: cursor)
-            let todays = course.meetings
-                .filter { $0.weekday == weekday }
-                .sorted { $0.slot.rawValue < $1.slot.rawValue }
+            let todays: [Meeting] = course.breakDays.contains(cursor)
+                ? []
+                : course.meetings
+                    .filter { $0.weekday == weekday }
+                    .sorted { $0.slot.rawValue < $1.slot.rawValue }
             for meeting in todays {
                 result.append(ClassSession(
                     course: course,
