@@ -85,6 +85,11 @@ struct Course: Identifiable, Hashable, Codable {
     let meetings: [Meeting]
     /// Days with no class (e.g. an exam week). Skipped when sessions are generated. Empty by default.
     var breakDays: [CalendarDay] = []
+    /// SessionNo values the student missed. Each must be a session that has already finished;
+    /// every other finished session counts as attended. Empty by default.
+    /// Data rule (enforced by tests): at most 3, and attendance never below 80% at any moment,
+    /// i.e. the k-th absence is session 5k or later.
+    var absentSessions: [Int] = []
     /// Published final average. `nil` until the course is graded.
     let finalMark: Double?
 

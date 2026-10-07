@@ -28,6 +28,12 @@ struct ClassSession: Identifiable, Hashable {
     func isPresent(at now: Date) -> Bool {
         state(at: now) == .completed
     }
+
+    /// Attendance report rule: the session has ended and the student was not marked absent.
+    /// (`isPresent(at:)` stays purely time-based; the Weekly Timetable badge uses it.)
+    func wasAttended(at now: Date) -> Bool {
+        isPresent(at: now) && !course.absentSessions.contains(number)
+    }
 }
 
 struct CourseAttendance: Identifiable, Hashable {
@@ -129,7 +135,7 @@ enum ScheduleCalendar {
     static func attendance(of course: Course, at now: Date) -> CourseAttendance {
         let all = sessions(of: course)
         let held = all.filter { $0.state(at: now) == .completed }.count
-        let attended = all.filter { $0.isPresent(at: now) }.count
+        let attended = all.filter { $0.wasAttended(at: now) }.count
         return CourseAttendance(course: course, attended: attended, held: held)
     }
 }

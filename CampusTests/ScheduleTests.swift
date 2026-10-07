@@ -95,8 +95,8 @@ struct ScheduleTests {
         #expect(held["MAD101"]?.held == 8)
         #expect(held["NWC204"]?.held == 8)
         #expect(held["OSG203"]?.held == 8)
-        // All finished sessions are Present.
-        #expect(held.values.allSatisfy { $0.attended == $0.held })
+        // Finished sessions minus the recorded absences are attended.
+        #expect(held.values.allSatisfy { $0.attended == $0.held - $0.course.absentSessions.count })
     }
 
     @Test func attendanceGrowsAsTimePasses() {
@@ -105,7 +105,8 @@ struct ScheduleTests {
         let after = ScheduleCalendar.attendance(of: course, at: moment(2026, 10, 6, 14, 45))
         #expect(before.held == 8)
         #expect(after.held == 9)
-        #expect(after.attended == 9)
+        #expect(before.attended == 8 - course.absentSessions.count)
+        #expect(after.attended == 9 - course.absentSessions.count)
         #expect(ScheduleCalendar.attendance(of: course, at: moment(2026, 9, 1, 0, 0)).held == 0)
         #expect(ScheduleCalendar.attendance(of: course, at: moment(2027, 1, 1, 0, 0)).held == 20)
     }
@@ -153,8 +154,8 @@ struct ScheduleTests {
             }
             let attendance = ScheduleCalendar.attendance(of: course, at: afterSummer)
             #expect(attendance.held == 20)
-            #expect(attendance.attended == 20)
-            #expect(attendance.percent == 100)
+            #expect(attendance.attended == 20 - course.absentSessions.count)
+            #expect(attendance.percent == Double(attendance.attended) / 20 * 100)
         }
     }
 

@@ -28,25 +28,33 @@ struct MockStudentService: StudentService {
     // reference screenshots; each course repeats its weekly pattern from start date to end date,
     // which reproduces the screenshot's SessionNo values (e.g. MAD101 #9 on Tue 6/10).
     // finalMark values are the requested all-passed marks (6-8), fixed so they survive restarts.
+    // absentSessions: missed sessions, drawn once with a fixed random seed (20261007) and written down here so they
+    // never change between launches. Rule: attendance (attended/held) must never fall below 80%, so a course may only
+    // have as many absences as held/5 allows (max 3), and the k-th absence sits at session 5k or later. At 4 sessions held
+    // even one absence is 75%, so IOT102 has none yet. Absences only sit on sessions that had finished by 2026-10-06.
     static let fall2026Courses: [Course] = [
         Course(code: "IOT102", name: "Internet of Things", className: "IA2104", lecturer: "loind",
                startDay: CalendarDay(2026, 9, 11), endDay: CalendarDay(2026, 11, 13),
                meetings: [Meeting(weekday: .friday, slot: .four, room: "P.132")],
+               absentSessions: [],
                finalMark: 7.8),
         Course(code: "MAD101", name: "Discrete mathematics", className: "IA2104", lecturer: "vinhdp",
                startDay: CalendarDay(2026, 9, 8), endDay: CalendarDay(2026, 11, 13),
                meetings: [Meeting(weekday: .tuesday, slot: .three, room: "P.115"),
                           Meeting(weekday: .friday, slot: .three, room: "P.115")],
+               absentSessions: [8],
                finalMark: 6.5),
         Course(code: "NWC204", name: "Computer Networking", className: "IA2104", lecturer: "NguyenLH5",
                startDay: CalendarDay(2026, 9, 9), endDay: CalendarDay(2026, 11, 14),
                meetings: [Meeting(weekday: .wednesday, slot: .three, room: "P.503"),
                           Meeting(weekday: .saturday, slot: .three, room: "P.503")],
+               absentSessions: [6],
                finalMark: 7.2),
         Course(code: "OSG203", name: "Operating System_Hệ điều hành", className: "IA2104", lecturer: "thaopy",
                startDay: CalendarDay(2026, 9, 9), endDay: CalendarDay(2026, 11, 14),
                meetings: [Meeting(weekday: .wednesday, slot: .four, room: "P.233"),
                           Meeting(weekday: .saturday, slot: .four, room: "P.233")],
+               absentSessions: [5],
                finalMark: 7.5),
     ]
 
@@ -56,6 +64,7 @@ struct MockStudentService: StudentService {
     // The meeting days follow from the start/end weekdays (Mon+Thu, Tue+Fri, Wed+Sat).
     // ASSUMED, not in any screenshot: rooms, slots, lecturers, the break week and the final marks.
     // The break week (15-21 June) makes each course 20 sessions, matching the "/20" in the reference attendance.
+    // absentSessions: 1-3 missed sessions per course (attendance 85-95%), same seed and 80% rule as Fall.
     private static let summerBreak = ScheduleCalendar.week(containing: CalendarDay(2026, 6, 15))
 
     static let summer2026Courses: [Course] = [
@@ -63,32 +72,32 @@ struct MockStudentService: StudentService {
                startDay: CalendarDay(2026, 5, 13), endDay: CalendarDay(2026, 7, 25),
                meetings: [Meeting(weekday: .wednesday, slot: .three, room: "P.201"),
                           Meeting(weekday: .saturday, slot: .three, room: "P.201")],
-               breakDays: summerBreak, finalMark: 7.0),
+               breakDays: summerBreak, absentSessions: [19], finalMark: 7.0),
         Course(code: "CSI106", name: "Introduction to Computer Science", className: "IA2102", lecturer: "hanvt5",
                startDay: CalendarDay(2026, 5, 11), endDay: CalendarDay(2026, 7, 23),
                meetings: [Meeting(weekday: .monday, slot: .three, room: "P.304"),
                           Meeting(weekday: .thursday, slot: .three, room: "P.304")],
-               breakDays: summerBreak, finalMark: 8.0),
+               breakDays: summerBreak, absentSessions: [5, 17], finalMark: 8.0),
         Course(code: "MAE101", name: "Mathematics for Engineering", className: "IA2102", lecturer: "tuanlq3",
                startDay: CalendarDay(2026, 5, 13), endDay: CalendarDay(2026, 7, 25),
                meetings: [Meeting(weekday: .wednesday, slot: .four, room: "P.201"),
                           Meeting(weekday: .saturday, slot: .four, room: "P.201")],
-               breakDays: summerBreak, finalMark: 6.8),
+               breakDays: summerBreak, absentSessions: [18], finalMark: 6.8),
         Course(code: "PFP191", name: "Programming Fundamentals with Python", className: "IA2102", lecturer: "namph4",
                startDay: CalendarDay(2026, 5, 11), endDay: CalendarDay(2026, 7, 23),
                meetings: [Meeting(weekday: .monday, slot: .four, room: "P.304"),
                           Meeting(weekday: .thursday, slot: .four, room: "P.304")],
-               breakDays: summerBreak, finalMark: 7.6),
+               breakDays: summerBreak, absentSessions: [6, 18], finalMark: 7.6),
         Course(code: "SSA101", name: "Academic skills", className: "IA2102", lecturer: "lanpt8",
                startDay: CalendarDay(2026, 5, 12), endDay: CalendarDay(2026, 7, 24),
                meetings: [Meeting(weekday: .tuesday, slot: .three, room: "P.402"),
                           Meeting(weekday: .friday, slot: .three, room: "P.402")],
-               breakDays: summerBreak, finalMark: 7.4),
+               breakDays: summerBreak, absentSessions: [7, 12, 16], finalMark: 7.4),
         Course(code: "VOV124", name: "Vovinam 2/3", className: "H1_VOV124_4B", lecturer: "binhnk",
                startDay: CalendarDay(2026, 5, 12), endDay: CalendarDay(2026, 7, 24),
                meetings: [Meeting(weekday: .tuesday, slot: .four, room: "P.G01"),
                           Meeting(weekday: .friday, slot: .four, room: "P.G01")],
-               breakDays: summerBreak, finalMark: 6.5),
+               breakDays: summerBreak, absentSessions: [7, 13, 17], finalMark: 6.5),
     ]
 
     private static let coursesBySemester: [String: [Course]] = [
