@@ -1,18 +1,38 @@
 import SwiftUI
 
-/// Placeholder launcher: the Home screen is not implemented yet.
-/// It only exists so the "Home" back button and navigation make sense.
+/// Home menu: three titled sections of two-column tiles, as in the Home reference screenshot.
+/// Tiles for screens that exist push them; the others open a neutral "not available yet" screen.
 struct HomeView: View {
     @Environment(\.studentService) private var service
 
+    private let columns = [
+        GridItem(.flexible(), spacing: HomeMenuMetrics.gap),
+        GridItem(.flexible()),
+    ]
+
     var body: some View {
         ScrollView {
-            VStack(spacing: 10) {
-                row("Weekly timetable") { TimetableView(service: service) }
-                row("Attendance report") { AttendanceView(service: service) }
-                row("Mark Report") { MarkReportView(service: service) }
+            VStack(alignment: .leading, spacing: HomeMenuMetrics.sectionSpacing) {
+                ForEach(HomeMenuSection.all) { section in
+                    VStack(alignment: .leading, spacing: HomeMenuMetrics.titleToCards) {
+                        HomeSectionTitle(title: section.title)
+                        LazyVGrid(columns: columns, spacing: HomeMenuMetrics.gap) {
+                            ForEach(section.items) { item in
+                                NavigationLink {
+                                    destination(for: item)
+                                } label: {
+                                    HomeMenuTile(item: item)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                }
             }
-            .padding(16)
+            .padding(.leading, HomeMenuMetrics.leadingInset)
+            .padding(.trailing, HomeMenuMetrics.trailingInset)
+            .padding(.top, HomeMenuMetrics.topPadding)
+            .padding(.bottom, HomeMenuMetrics.sectionSpacing)
         }
         .background(Theme.canvas.ignoresSafeArea())
         .navigationTitle("Home")   // kept so pushed screens show "< Home"; the header below replaces the visible title
@@ -34,17 +54,13 @@ struct HomeView: View {
         }
     }
 
-    private func row<Destination: View>(_ title: String,
-                                        @ViewBuilder destination: @escaping () -> Destination) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
-            ReportCard(accent: Theme.orange) {
-                Text(title)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Theme.navy)
-            }
+    @ViewBuilder
+    private func destination(for item: HomeMenuItem) -> some View {
+        switch item.destination {
+        case .timetable: TimetableView(service: service)
+        case .attendance: AttendanceView(service: service)
+        case .marks: MarkReportView(service: service)
+        case .unavailable: HomeUnavailableView(title: item.title)
         }
-        .buttonStyle(.plain)
     }
 }

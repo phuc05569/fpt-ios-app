@@ -127,3 +127,15 @@ Fall never drops as sessions progress; percent recomputed from sessions at 6 clo
 Verified statically only (tree-sitter syntax; Python port of the same checks on the Swift data: all pass). Swift tests NOT run - needs Xcode/GitHub Actions.
 Known edge (pre-existing, UI untouched): before a course's first session, held = 0 and the report shows 0/0 with 0% (only reachable by setting the device date before the semester).
 Future option: after Fri 09/10 17:15 (IOT102 session #5 held) one IOT102 absence becomes possible (4/5 = 80%); not added because it would be a future event.
+
+## M8 - Home menu rebuilt from the Home reference screenshot (this run, NOT committed)
+Scope: Home body only. Mark Report, Attendance Report, Weekly Timetable, their data, the Home header/bell, tab bar, AppIcon, project file and workflow are untouched.
+Before: HomeView was a placeholder list of 3 plain rows (Weekly timetable, Attendance report, Mark Report). Now: 3 titled sections of two-column white tiles with a coloured icon tile and a label.
+Sections/items (as in the reference): NOTIFICATION AND APPLICATION STATUS (Notification, Application status) | INFORMATION ACCESS (Weekly timetable, Exam schedule, Semester Schedule) | REPORTS (Attendance report, Mark Report, third card, "Student Fee").
+Navigation: Weekly timetable -> TimetableView, Attendance report -> AttendanceView, Mark Report -> MarkReportView (same service, same push as before). Notification, Application status, Exam schedule, Semester Schedule and the third Reports card have no screen yet and open a neutral "<title> is not available yet." screen (no invented data).
+Metrics measured from the screenshot pixels (828x1792 = 414x896 pt): cards 182.5x122.5pt, radius 16, gap 8.5, leading inset 16, trailing inset 24.5 (the reference is asymmetric), icon tile 55.5pt radius 16 (continuous), tile 20pt below card top, labels 13pt medium navy, section titles 13pt bold navy tracking 0.5, section spacing 24, soft shadow ~5%.
+Tile/glyph colours sampled from the image: FFF3E0/F39200, E8F0FE/1668B2, E0F2FE/0EA5E9, FEE2E2/EF4444, EDE9FE/8B5CF6, D1FAE5/10B981, FEF3C7/F59E0B, FEE2E2/EF4444.
+Icons: SF Symbols for bell, newspaper, checklist; drawn in SwiftUI for address book, calendar, calendar grid, bar-chart square, cash register (no matching SF Symbol).
+Assumptions to confirm: (1) The third Reports card label is hidden behind the tab bar in the reference; the user confirmed it is "Student Fee". (2) Font sizes were calibrated against a Helvetica-like font, not SF Pro, so +/-0.5pt is possible. (3) Canvas stays Theme.canvas F4F6F9 (reference F3F5F8, 1 level off, shared by every screen). (4) The reference tab bar shows a house with a chimney; BottomTabBar was not changed.
+Files: MOD Features/Home/HomeView.swift (body + destination switch; toolbar/header block unchanged), NEW Features/Home/HomeMenu.swift (model, metrics, tile, glyphs), NEW CampusTests/HomeMenuTests.swift (3 tests), MOD progress.md.
+Verified statically only (tree-sitter syntax on the 3 Swift files). Not compiled, not run, not seen on a device or simulator - needs the GitHub Actions build.
