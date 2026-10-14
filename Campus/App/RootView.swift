@@ -2,6 +2,8 @@ import SwiftUI
 
 struct RootView: View {
     @State private var tab: AppTab = .home
+    @AppStorage(AppSettings.darkModeKey) private var darkMode = false   // off by default
+    @Environment(\.studentService) private var service
 
     var body: some View {
         Group {
@@ -12,26 +14,23 @@ struct RootView: View {
                 }
                 .tint(.white)   // white back chevron and label
             case .chat:
-                PlaceholderView(title: "Chat")
+                NavigationStack {
+                    MessagesView(service: service)
+                }
+                .tint(.white)
             case .profile:
-                PlaceholderView(title: "Profile")
+                NavigationStack {   // its transparent bar sets the status bar style (see ProfileView)
+                    ProfileView(service: service)
+                }
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             BottomTabBar(selection: $tab)
         }
-        .preferredColorScheme(.light)   // the reference design is light-only
+        .preferredColorScheme(darkMode ? .dark : .light)   // the reference is light; dark is opt-in from Profile
     }
 }
 
-/// Chat and Profile are not in the reference screenshots.
-private struct PlaceholderView: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .foregroundStyle(Theme.textSecondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Theme.canvas.ignoresSafeArea())
-    }
+enum AppSettings {
+    static let darkModeKey = "darkMode"
 }

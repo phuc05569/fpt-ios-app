@@ -5,13 +5,15 @@ import SwiftUI
 struct ReportCard<Content: View>: View {
     let accent: Color
     var verticalPadding: CGFloat = 14
+    var leadingPadding: CGFloat = 14   // inside the bar; the Messages rows use 10
+    var trailingPadding: CGFloat = 14
     @ViewBuilder let content: Content
 
     var body: some View {
         content
             .padding(.vertical, verticalPadding)
-            .padding(.trailing, 14)
-            .padding(.leading, 18)   // 4pt bar + 14pt padding
+            .padding(.trailing, trailingPadding)
+            .padding(.leading, 4 + leadingPadding)   // 4pt bar + padding
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Theme.card)
             .overlay(alignment: .leading) {

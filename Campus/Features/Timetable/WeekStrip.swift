@@ -22,7 +22,7 @@ struct WeekStrip: View {
         }
         .padding(.bottom, 10.25)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background(Theme.card)
         .overlay(alignment: .top) { hairline }
         .overlay(alignment: .bottom) { hairline }
     }
@@ -83,7 +83,7 @@ struct WeekStrip: View {
         } label: {
             ZStack {
                 if isSelected {
-                    Circle().fill(Theme.navy).frame(width: 30, height: 30)
+                    Circle().fill(Theme.bar).frame(width: 30, height: 30)
                 }
                 Text("\(day.day)")
                     .font(.system(size: 16, weight: .medium))

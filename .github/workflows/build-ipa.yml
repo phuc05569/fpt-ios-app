@@ -11,7 +11,7 @@ env:
   SCHEME: Campus                         # shared scheme in Campus.xcodeproj
   APP_NAME: Campus                       # PRODUCT_NAME = target name, so the bundle is Campus.app
   EXPECTED_BUNDLE_ID: com.phuchoang.fpt
-  EXPECTED_DISPLAY_NAME: FPT
+  EXPECTED_DISPLAY_NAME: myFAP
   MIN_IOS: "18.3"                        # must match IPHONEOS_DEPLOYMENT_TARGET in the project
   IPA_NAME: FPT-unsigned.ipa
 
@@ -19,7 +19,7 @@ jobs:
   build-ipa:
     name: Archive and package unsigned IPA
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 45                  # archive + simulator unit tests
     defaults:
       run:
         shell: bash
@@ -71,6 +71,7 @@ jobs:
             exit 1
           fi
           echo "Using project: $found"
+          echo "Source revision (archived and tested): $(git rev-parse HEAD)"
           echo "PROJECT_PATH=$found" >> "$GITHUB_ENV"
           echo "BUILD_DIR=$RUNNER_TEMP/build" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/build"
@@ -160,11 +161,75 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload build log (on failure)
+      # Runs after the IPA upload, so a failing test never blocks the IPA artifact.
+      - name: Pick an iPhone simulator (iOS >= deployment target)
+        run: |
+          set -euo pipefail
+          udid="$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          minimum = tuple(int(p) for p in sys.argv[1].split("."))
+          best = None
+          for runtime, devices in json.load(sys.stdin)["devices"].items():
+              if ".iOS-" not in runtime:
+                  continue
+              version = tuple(int(p) for p in runtime.rsplit(".iOS-", 1)[1].split("-"))
+              for device in devices:
+                  if version >= minimum and device["name"].startswith("iPhone"):
+                      if best is None or version > best[0]:
+                          best = (version, device["udid"], device["name"])
+          if best is None:
+              sys.exit("No available iPhone simulator with iOS >= " + sys.argv[1])
+          print(best[1])
+          print("Using", best[2], "iOS", ".".join(map(str, best[0])), file=sys.stderr)
+          ' "$MIN_IOS")"
+          echo "SIM_UDID=$udid" >> "$GITHUB_ENV"
+
+      - name: Run unit tests on the simulator
+        run: |
+          set -euo pipefail
+          xcodebuild test \
+            -project "$PROJECT_PATH" \
+            -scheme "$SCHEME" \
+            -destination "id=$SIM_UDID" \
+            -derivedDataPath "$BUILD_DIR/TestDerivedData" \
+            -resultBundlePath "$BUILD_DIR/UnitTests.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "$BUILD_DIR/xcodebuild-test.log"
+
+      # xcodebuild exits 0 when no tests run at all, so require a real, all-passing result.
+      - name: Check the test results (count > 0, no failures)
+        run: |
+          set -euo pipefail
+          xcrun xcresulttool get test-results summary --path "$BUILD_DIR/UnitTests.xcresult" > "$BUILD_DIR/test-summary.json"
+          python3 - "$BUILD_DIR/test-summary.json" <<'PY'
+          import json, os, sys
+          s = json.load(open(sys.argv[1]))
+          total, passed, failed, skipped = (s.get(k, 0) for k in ("totalTestCount", "passedTests", "failedTests", "skippedTests"))
+          line = f"Tests: {total} total, {passed} passed, {failed} failed, {skipped} skipped, result: {s.get('result')}"
+          print(line)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as out:
+              out.write(line + "\n")
+          if total == 0 or failed > 0 or s.get("result") != "Passed":
+              sys.exit("::error::" + line)
+          PY
+
+      - name: Show test or compile failures
+        if: failure()
+        run: |
+          log="${BUILD_DIR:-}/xcodebuild-test.log"
+          if [ -f "$log" ]; then
+            grep -E " error: |✘|failed|TEST FAILED|BUILD FAILED" "$log" | sed -n '1,60p' || true
+          fi
+
+      - name: Upload build and test logs (on failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-log
-          path: ${{ runner.temp }}/build/xcodebuild.log
+          path: |
+            ${{ runner.temp }}/build/xcodebuild.log
+            ${{ runner.temp }}/build/xcodebuild-test.log
+            ${{ runner.temp }}/build/UnitTests.xcresult
+            ${{ runner.temp }}/build/test-summary.json
           if-no-files-found: ignore
           retention-days: 7

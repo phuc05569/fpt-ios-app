@@ -17,6 +17,9 @@ struct TimetableView: View {
                 SemesterChipBar(semesters: viewModel.semesters, selected: viewModel.selected) {
                     viewModel.selected = $0
                 }
+                DemoNotice(text: DemoNotice.sampleData)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
                 Text("Current week: \(weekDays[0].formatted) – \(weekDays[6].formatted)")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
@@ -67,7 +70,7 @@ struct TimetableView: View {
                 }
                 .id(weekDays[0])   // new week starts scrolled to the top
             }
-            .background(Color.white)
+            .background(Theme.card)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Theme.statusGrey).frame(height: 0.5)
             }
