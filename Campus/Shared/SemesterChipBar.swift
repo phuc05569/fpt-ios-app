@@ -37,7 +37,7 @@ struct SemesterChipBar: View {
             .padding(.leading, 14)
             .padding(.trailing, 16)
             .frame(height: 38)
-            .background(isSelected ? Theme.orange : Color.white, in: Capsule())
+            .background(isSelected ? Theme.orange : Theme.card, in: Capsule())
             .overlay {
                 if !isSelected {
                     Capsule().strokeBorder(Theme.chipBorder, lineWidth: 1)

@@ -12,6 +12,9 @@ struct AttendanceView: View {
             SemesterChipBar(semesters: viewModel.semesters, selected: viewModel.selected) {
                 viewModel.selected = $0
             }
+            DemoNotice(text: DemoNotice.sampleData)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
             content
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

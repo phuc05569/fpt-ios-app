@@ -18,6 +18,15 @@ struct HomeMenuTests {
         #expect(items.first { $0.title == "Mark Report" }?.destination == .marks)
     }
 
+    @Test func referenceScreensAreWired() {
+        let items = HomeMenuSection.all.flatMap(\.items)
+        #expect(items.first { $0.title == "Notification" }?.destination == .notification)
+        #expect(items.first { $0.title == "Application status" }?.destination == .applicationStatus)
+        #expect(items.first { $0.title == "Exam schedule" }?.destination == .exams)
+        #expect(items.first { $0.title == "Student Fee" }?.destination == .fee)
+        #expect(items.first { $0.title == "Semester Schedule" }?.destination == .unavailable)   // no reference yet
+    }
+
     @Test func everyItemHasUniqueTitle() {
         let titles = HomeMenuSection.all.flatMap(\.items).map(\.title)
         #expect(Set(titles).count == titles.count)

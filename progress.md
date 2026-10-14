@@ -139,3 +139,67 @@ Icons: SF Symbols for bell, newspaper, checklist; drawn in SwiftUI for address b
 Assumptions to confirm: (1) The third Reports card label is hidden behind the tab bar in the reference; the user confirmed it is "Student Fee". (2) Font sizes were calibrated against a Helvetica-like font, not SF Pro, so +/-0.5pt is possible. (3) Canvas stays Theme.canvas F4F6F9 (reference F3F5F8, 1 level off, shared by every screen). (4) The reference tab bar shows a house with a chimney; BottomTabBar was not changed.
 Files: MOD Features/Home/HomeView.swift (body + destination switch; toolbar/header block unchanged), NEW Features/Home/HomeMenu.swift (model, metrics, tile, glyphs), NEW CampusTests/HomeMenuTests.swift (3 tests), MOD progress.md.
 Verified statically only (tree-sitter syntax on the 3 Swift files). Not compiled, not run, not seen on a device or simulator - needs the GitHub Actions build.
+
+## M9 - Profile, Messages, Notification, Application status, Exam schedule, Student Fee, Dark Mode, app name myFAP (2026-10-14, NOT committed)
+References: 11 screenshots (Profile x2, Messages, Notification, Application status, Exam schedule SUMMER2026 x5, Student Fee), all measured in pixels (828x1792 = 414x896pt).
+User decisions: app name "myFAP"; Fall attendance data kept as is and Messages copied as text (they disagree: Messages say OSG203/NWC204 absent 03/10 and MAD101 present 02/10);
+Exam schedule opens on SUMMER2026 and FALL2026/SPRING2026 show 0 exams until their screenshots arrive; Dark Mode built but OFF by default.
+New screens: Profile tab (navy header card, Student Information with eye reveal, Student ID QR, Check information online, Appearance/Dark Mode switch, Notification Settings with real
+iOS permission status, "myFAP v2.0.6 (1)" read from the bundle) | Messages tab (7 messages, live search, row opens a simple detail) | Notification (search box + orange button, empty list)
+| Application status (empty state) | Exam schedule (13 SUMMER2026 exams copied verbatim, pinned count row, refresh) | Student Fee (0.0 VND card, FPT DNG button, empty paid list).
+Home: Notification, Application status, Exam schedule and Student Fee tiles and the header bell now open their screens; Semester Schedule stays "not available yet" (no reference).
+Data: MockStudentService gains exams/profile/messages/notifications/feeBalance (protocol extended; MockStudentService is its only implementation). No existing line removed:
+Fall/Summer courses, attendance, absences and marks are byte-identical.
+Dark Mode: Theme tokens now carry light + dark values (light values unchanged, test-checked); Theme.bar = constant navy for bars and navy cards; Theme.navy = navy text (light) / light grey (dark).
+Existing screens touched only to swap hard-coded white/navy fills for tokens (Timetable background, WeekStrip, SemesterChipBar, BottomTabBar): identical in light mode. Setting key "darkMode" (AppStorage).
+App name: INFOPLIST_KEY_CFBundleDisplayName = myFAP and MARKETING_VERSION = 2.0.6 (app target, Debug+Release); workflow EXPECTED_DISPLAY_NAME = myFAP. Bundle id, IPA/artifact names unchanged.
+Student ID QR: screenshot decodes to SE211094; it matches exactly a level-M, alphanumeric, mask-2 symbol. The app uses Core Image level M (scans the same; module pattern may differ if Core Image picks byte mode).
+Assumptions to confirm: full email unknown (eye shows the masked text); FPT DNG link unknown (button does nothing yet); small "Check information online" QR assumed to encode https://fap.fpt.edu.vn;
+7th message's hidden end assumed equal to the 6th; dark-mode texts "Dark theme is active", "Enabled", "ON" are not in any reference; message detail screen has no reference.
+Known gaps: status bar text stays dark over the navy Profile header (reference shows white there); Dark Mode switch is the native iOS toggle (reference ~2pt smaller); tab bar icons unchanged.
+Files: NEW Models/{Exam,Message,StudentProfile}.swift, Shared/{DecoratedEmptyState,QRCodeImage}.swift, Features/{Profile/ProfileView,Messages/MessagesView,Notification/NotificationView,
+ApplicationStatus/ApplicationStatusView,Exams/ExamScheduleView,Fee/StudentFeeView}.swift, CampusTests/ReferenceScreensTests.swift (8 tests);
+MOD App/RootView.swift, Features/Home/{HomeView,HomeMenu}.swift, Services/{StudentService,MockStudentService}.swift, Shared/{Theme,ReportCard,SemesterChipBar,BottomTabBar}.swift,
+Features/Timetable/{TimetableView,WeekStrip}.swift, CampusTests/HomeMenuTests.swift (+1 test), project.pbxproj, build-ipa.yml, progress.md.
+Verified statically only: tree-sitter parse of all 24 changed Swift files, line-by-line compile review, data cross-checked against the screenshots. NOT compiled, tests NOT run,
+nothing seen on a device or simulator (no Xcode/Swift toolchain here) - needs the GitHub Actions build.
+
+## M10 - Build preparation, verification and fixes on top of M9 (2026-10-15, NOT committed)
+Compile risks fixed (found by review; nothing could be compiled here: no Xcode, download.swift.org blocked by the sandbox network):
+- Explicit init(service:) on MessagesView, NotificationView, ExamScheduleView, StudentFeeView, ProfileView: their private @State properties
+  could make the synthesized memberwise init private ("initializer is inaccessible"). Same pattern as MarkReportView/TimetableView/AttendanceView.
+- Dark Mode switch accessibility: accessibilityLabel(configuration.label) does not compile; replaced by accessibilityRepresentation { Toggle }.
+Workflow: after the IPA upload, picks the newest available iPhone simulator with iOS >= 18.3 and runs `xcodebuild test` (CampusTests);
+failures print the errors and upload xcodebuild-test.log + UnitTests.xcresult in the "build-log" artifact. Job timeout 30 -> 45 min.
+Before this, CI never ran the tests. YAML parsed, simulator picker run locally against sample lists, ShellCheck clean on all 9 run steps.
+Visual fixes: Profile status bar white over the navy header and dark once scrolled past (both Profile references), via an empty, clear,
+"visible" navigation bar whose color scheme follows the scroll offset (192pt) or Dark Mode; custom Dark Mode switch 48.5x27 track,
+23pt knob inset 2pt (reference), "on" colour green = assumption; shadows fitted to the reference: Profile cards black 6% r8 (were none),
+search bars 6% r8 y2, Fee card 15% r12 y4; all shadows now drawn on the background shape only (text and QR modules were being shadowed).
+Content: small "Check information online" QR now VERIFIED = https://fap.fpt.edu.vn (zxing-cpp); Student ID QR re-verified = SE211094.
+7th message REMOVED from data: only its title, "12 days ago · vinhdp" and the tops of one body line are visible; it is UNRESOLVED.
+FPT DNG link UNRESOLVED: not in the repo history, assets or config, not found on the web; button stays unwired (StudentFeeView.paymentURL).
+Email UNRESOLVED: only the masked form is known.
+Checks run: tree-sitter parse of all 24 changed Swift files; Python re-implementation of every new test expectation against the Swift data
+(19/19 pass); patch applies cleanly to origin/main 4fda9ed; original feature files (Marks, Attendance, models, Home header, assets, 4 old test files) unchanged.
+NOT done: Swift compilation, running XCTest/Swift Testing, simulator or device screenshots - these need the GitHub Actions run.
+
+## M11 - Demo disclosure, CI hardening, data-integrity verification (2026-10-15, NOT committed)
+Academic data: UNCHANGED by user requirement. Verified against main 4fda9ed: Course/CourseMark/Schedule/Semester models, MarkReportViewModel,
+MarkCard, AttendanceCard, CourseListViewModel, TimetableDayRow, StatusPill and the 3 data test files are byte-identical; MockStudentService is
+insertion-only; the 10 Fall/Summer course records (absences, final marks) and 4 archived marks are identical.
+Disclosure (user requirement): new Shared/DemoNotice.swift, a non-dismissible notice on every screen with academic, identity or fee information:
+Mark Report, Attendance, Weekly timetable -> "Unofficial demo app · includes sample data, not official FPT records";
+Exam schedule, Messages, Student Fee -> "Unofficial demo app · not an official FPT record"; Profile Student ID card -> "... not valid for identity verification".
+Sample (unverified) values: FALL2026 and SUMMER2026 final marks and pass statuses, all FALL2026/SUMMER2026 absences, SUMMER2026 rooms/slots/lecturers.
+Verified from screenshots: FALL2026 timetable data, SPRING2026/FALL2025 archived marks, all exams, messages, profile, fee.
+Contradictions between the dataset and the reference screenshots (identified, NOT changed):
+- MAD101 02/10 (session 8): real message "Có mặt" (present); app counts it absent.
+- NWC204 03/10 (session 8): real message "Vắng mặt" (absent); app counts it present, app absence is 26/09 (session 6).
+- OSG203 03/10 (session 8): real message "Vắng mặt" (absent); app counts it present, app absence is 23/09 (session 5).
+- Exam schedule lists 2NDFE (second-attempt final) for CSI106, PFP191, CEA201, MAE101, SSA101; Mark Report shows them Passed with first-attempt marks.
+- FALL2026 Mark Report shows final marks and Passed for courses that run until 13-14/11/2026.
+CI: prints the source revision; new step reads UnitTests.xcresult (xcresulttool get test-results summary) and fails unless total > 0, failed = 0 and
+result = Passed (xcodebuild exits 0 when no tests run); writes the counts to the job summary; uploads test-summary.json on failure.
+Guard checked locally with sample summaries (pass -> 0, zero tests -> fail, one failure -> fail); YAML valid; ShellCheck clean.
+NOT done: Swift compile, test run, rendered screenshots - need the GitHub Actions run.
