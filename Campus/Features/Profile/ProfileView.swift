@@ -203,11 +203,6 @@ struct ProfileView: View {
                     .foregroundStyle(Theme.textTertiary)
                     .multilineTextAlignment(.center)
                     .padding(.top, 3.8)
-                Text(DemoDisclosure.notValidID)
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.textTertiary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
                 HStack(spacing: 13) {
                     QRCodeImage(text: Self.onlineCheckURL)
                         .frame(width: 39.5, height: 39.5)

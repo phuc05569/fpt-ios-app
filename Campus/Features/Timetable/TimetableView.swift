@@ -1,4 +1,4 @@
-import SwiftUI
+﻿import SwiftUI
 
 struct TimetableView: View {
     @State private var viewModel: CourseListViewModel
@@ -17,7 +17,7 @@ struct TimetableView: View {
                 SemesterChipBar(semesters: viewModel.semesters, selected: viewModel.selected) {
                     viewModel.selected = $0
                 }
-                Text("Current week: \(weekDays[0].formatted) – \(weekDays[6].formatted)")
+                Text("Current week: \(weekDays[0].formatted) â€“ \(weekDays[6].formatted)")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 25)
@@ -39,7 +39,6 @@ struct TimetableView: View {
             .background(Theme.canvas.ignoresSafeArea())
         }
         .navigationTitle("Weekly timetable")
-        .sampleDataTitle("Weekly timetable")
         .navigationBarTitleDisplayMode(.inline)
         .navyNavigationBar()
         .task { await viewModel.loadSemesters() }
