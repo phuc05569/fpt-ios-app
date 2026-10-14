@@ -53,7 +53,7 @@ struct BottomTabBar: View {
         .frame(height: 30, alignment: .top)
         .background {
             UnevenRoundedRectangle(topLeadingRadius: 20, topTrailingRadius: 20)
-                .fill(Theme.navy)
+                .fill(Theme.bar)
                 .shadow(color: .black.opacity(0.12), radius: 10, y: -4)
                 .ignoresSafeArea(edges: .bottom)
         }

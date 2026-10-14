@@ -39,6 +39,7 @@ struct TimetableView: View {
             .background(Theme.canvas.ignoresSafeArea())
         }
         .navigationTitle("Weekly timetable")
+        .sampleDataTitle("Weekly timetable")
         .navigationBarTitleDisplayMode(.inline)
         .navyNavigationBar()
         .task { await viewModel.loadSemesters() }
@@ -67,7 +68,7 @@ struct TimetableView: View {
                 }
                 .id(weekDays[0])   // new week starts scrolled to the top
             }
-            .background(Color.white)
+            .background(Theme.card)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(Theme.statusGrey).frame(height: 0.5)
             }

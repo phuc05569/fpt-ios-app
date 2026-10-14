@@ -2,10 +2,10 @@ import SwiftUI
 
 // MARK: - Model
 
-/// Where a Home menu tile leads. Only screens that already exist are wired to real views;
-/// the rest open a neutral "not available yet" screen instead of showing invented data.
+/// Where a Home menu tile leads. Semester Schedule has no reference screenshot yet,
+/// so it opens a neutral "not available yet" screen instead of showing invented data.
 enum HomeDestination: Equatable {
-    case timetable, attendance, marks, unavailable
+    case timetable, attendance, marks, notification, applicationStatus, exams, fee, unavailable
 }
 
 enum HomeGlyph: Equatable {
@@ -28,31 +28,31 @@ struct HomeMenuSection: Identifiable, Equatable {
 }
 
 extension HomeMenuSection {
-    /// Tile and glyph colours sampled from the Home reference screenshot.
+    /// Tile and glyph colours sampled from the Home reference screenshot (dark tiles: the accent at 22% over the dark card).
     /// The label of the last Reports card is hidden behind the tab bar in the reference;
     /// the user confirmed it is "Student Fee".
     static let all: [HomeMenuSection] = [
         HomeMenuSection(title: "NOTIFICATION AND APPLICATION STATUS", items: [
             HomeMenuItem(title: "Notification", glyph: .bell,
-                         tile: Color(hex: 0xFFF3E0), accent: Theme.orange, destination: .unavailable),
+                         tile: Color(light: 0xFFF3E0, dark: 0x4E402B), accent: Theme.orange, destination: .notification),
             HomeMenuItem(title: "Application status", glyph: .contactBook,
-                         tile: Color(hex: 0xE8F0FE), accent: Color(hex: 0x1668B2), destination: .unavailable),
+                         tile: Color(light: 0xE8F0FE, dark: 0x1D3752), accent: Color(hex: 0x1668B2), destination: .applicationStatus),
         ]),
         HomeMenuSection(title: "INFORMATION ACCESS", items: [
             HomeMenuItem(title: "Weekly timetable", glyph: .calendar,
-                         tile: Color(hex: 0xE0F2FE), accent: Color(hex: 0x0EA5E9), destination: .timetable),
+                         tile: Color(light: 0xE0F2FE, dark: 0x1B445E), accent: Color(hex: 0x0EA5E9), destination: .timetable),
             HomeMenuItem(title: "Exam schedule", glyph: .newspaper,
-                         tile: Color(hex: 0xFEE2E2), accent: Theme.red, destination: .unavailable),
+                         tile: Color(light: 0xFEE2E2, dark: 0x4D2F3A), accent: Theme.red, destination: .exams),
             HomeMenuItem(title: "Semester Schedule", glyph: .calendarGrid,
-                         tile: Color(hex: 0xEDE9FE), accent: Color(hex: 0x8B5CF6), destination: .unavailable),
+                         tile: Color(light: 0xEDE9FE, dark: 0x373461), accent: Color(hex: 0x8B5CF6), destination: .unavailable),
         ]),
         HomeMenuSection(title: "REPORTS", items: [
             HomeMenuItem(title: "Attendance report", glyph: .checklist,
-                         tile: Color(hex: 0xD1FAE5), accent: Theme.green, destination: .attendance),
+                         tile: Color(light: 0xD1FAE5, dark: 0x1C4947), accent: Theme.green, destination: .attendance),
             HomeMenuItem(title: "Mark Report", glyph: .barChart,
-                         tile: Color(hex: 0xFEF3C7), accent: Color(hex: 0xF59E0B), destination: .marks),
+                         tile: Color(light: 0xFEF3C7, dark: 0x4E432D), accent: Color(hex: 0xF59E0B), destination: .marks),
             HomeMenuItem(title: "Student Fee", glyph: .cashRegister,
-                         tile: Color(hex: 0xFEE2E2), accent: Theme.red, destination: .unavailable),
+                         tile: Color(light: 0xFEE2E2, dark: 0x4D2F3A), accent: Theme.red, destination: .fee),
         ]),
     ]
 }

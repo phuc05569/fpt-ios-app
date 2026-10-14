@@ -17,6 +17,7 @@ struct AttendanceView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.canvas.ignoresSafeArea())
         .navigationTitle("Attendance Report")
+        .sampleDataTitle("Attendance Report")
         .navigationBarTitleDisplayMode(.inline)
         .navyNavigationBar()
         .task { await viewModel.loadSemesters() }

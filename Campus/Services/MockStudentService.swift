@@ -22,6 +22,33 @@ struct MockStudentService: StudentService {
         return Self.archivedMarks[semester.name] ?? []
     }
 
+    func exams(for semester: Semester) async throws -> [Exam] {
+        try await Task.sleep(for: delay)
+        return Self.examsBySemester[semester.name] ?? []
+    }
+
+    func profile() async throws -> StudentProfile {
+        try await Task.sleep(for: delay)
+        return Self.studentProfile
+    }
+
+    func messages() async throws -> [Message] {
+        try await Task.sleep(for: delay)
+        return Self.inbox
+    }
+
+    /// The Notification screenshot shows an empty list.
+    func notifications() async throws -> [Message] {
+        try await Task.sleep(for: delay)
+        return []
+    }
+
+    /// The Student Fee screenshot shows "0.0 VND" and no paid invoices.
+    func feeBalance() async throws -> Double {
+        try await Task.sleep(for: delay)
+        return 0
+    }
+
     // MARK: - Scheduled courses (single source of truth)
 
     // FALL2026, class IA2104. Rooms, slots, lecturers, names and start/end dates come from the
@@ -103,6 +130,53 @@ struct MockStudentService: StudentService {
     private static let coursesBySemester: [String: [Course]] = [
         "FALL2026": fall2026Courses,
         "SUMMER2026": summer2026Courses,
+    ]
+
+    // MARK: - Exams, profile and messages (copied from the reference screenshots)
+
+    // Only SUMMER2026 was shown; other semesters show 0 exams until their screenshots arrive.
+    // Blank rooms and types are blank in the reference too.
+    static let summer2026Exams: [Exam] = [
+        Exam(day: CalendarDay(2026, 6, 30), subject: "VOV124", room: "VOV2", time: "07h00-08h30", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 19), subject: "PFP191", room: "130", time: "13h40-15h40", type: "PE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 20), subject: "PFP191", room: "007", time: "17h45-20h00", type: "", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 26), subject: "CSI106", room: "133", time: "16h10-17h40", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 28), subject: "CEA201", room: "302", time: "12h50-14h20", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 29), subject: "PFP191", room: "233", time: "07h30-09h00", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 7, 31), subject: "MAE101", room: "312", time: "10h50-12h20", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 2), subject: "SSA101", room: "225", time: "07h30-09h00", type: "FE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 2), subject: "CSI106", room: "", time: "16h10-17h40", type: "2NDFE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 4), subject: "PFP191", room: "", time: "10h50-12h20", type: "2NDFE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 4), subject: "CEA201", room: "", time: "16h10-17h40", type: "2NDFE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 8), subject: "MAE101", room: "", time: "10h50-12h20", type: "2NDFE", status: "Đã thi"),
+        Exam(day: CalendarDay(2026, 8, 8), subject: "SSA101", room: "", time: "14h30-16h00", type: "2NDFE", status: "Đã thi"),
+    ]
+
+    private static let examsBySemester: [String: [Exam]] = ["SUMMER2026": summer2026Exams]
+
+    // The roll number is what the Student ID QR code in the reference decodes to.
+    // shortcut: only the masked email is known, so revealing it shows the same text; put the full address here to reveal it.
+    static let studentProfile = StudentProfile(name: "Vũ Hoàng Phúc", badge: "HD", rollNumber: "SE211094",
+                                               email: "phu***699@gmail.com", campus: "HCM")
+
+    // Newest first, as in the reference. These are copied as text; the Fall attendance data above is
+    // deliberately left unchanged even where it disagrees (user decision, 2026-10-14).
+    // UNRESOLVED: a 7th row is cut off by the tab bar. Visible: "Cập nhật điểm danh", "12 days ago · vinhdp",
+    // and only the tops of its first body line. Its body cannot be read, so it is left out rather than guessed;
+    // add it (and any later rows) from a scrolled screenshot.
+    static let inbox: [Message] = [
+        Message(id: 1, title: "Thông báo đăng nhập", sender: "SE211094",
+                body: "Bạn vừa đăng nhập lúc 05/10/2026 10:09:38.", day: CalendarDay(2026, 10, 5)),
+        Message(id: 2, title: "Cập nhật điểm danh", sender: "thaopy",
+                body: "Điểm danh Operating System_Hệ điều hành ngày 03/10/2026: Vắng mặt.", day: CalendarDay(2026, 10, 3)),
+        Message(id: 3, title: "Cập nhật điểm danh", sender: "NguyenLH5",
+                body: "Điểm danh Mạng máy tính ngày 03/10/2026: Vắng mặt.", day: CalendarDay(2026, 10, 3)),
+        Message(id: 4, title: "Cập nhật điểm danh", sender: "loind",
+                body: "Điểm danh Internet vạn vật ngày 02/10/2026: Có mặt.", day: CalendarDay(2026, 10, 2)),
+        Message(id: 5, title: "Cập nhật điểm danh", sender: "loind",
+                body: "Điểm danh Internet vạn vật ngày 02/10/2026: Có mặt.", day: CalendarDay(2026, 10, 2)),
+        Message(id: 6, title: "Cập nhật điểm danh", sender: "vinhdp",
+                body: "Điểm danh Toán rời rạc ngày 02/10/2026: Có mặt.", day: CalendarDay(2026, 10, 2)),
     ]
 
     // MARK: - Marks of semesters that have no schedule data yet (copied from the reference screenshots)

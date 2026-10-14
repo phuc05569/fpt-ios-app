@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Home menu: three titled sections of two-column tiles, as in the Home reference screenshot.
-/// Tiles for screens that exist push them; the others open a neutral "not available yet" screen.
+/// Tiles push their screens; Semester Schedule (no reference yet) opens a neutral "not available yet" screen.
 struct HomeView: View {
     @Environment(\.studentService) private var service
 
@@ -46,10 +46,14 @@ struct HomeView: View {
                 HomeProfileHeader()
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 19))
-                    .foregroundStyle(Color.white)
-                    .accessibilityLabel("Notifications")
+                NavigationLink {
+                    NotificationView(service: service)
+                } label: {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 19))
+                        .foregroundStyle(Color.white)
+                }
+                .accessibilityLabel("Notifications")
             }
         }
     }
@@ -60,6 +64,10 @@ struct HomeView: View {
         case .timetable: TimetableView(service: service)
         case .attendance: AttendanceView(service: service)
         case .marks: MarkReportView(service: service)
+        case .notification: NotificationView(service: service)
+        case .applicationStatus: ApplicationStatusView()
+        case .exams: ExamScheduleView(service: service)
+        case .fee: StudentFeeView(service: service)
         case .unavailable: HomeUnavailableView(title: item.title)
         }
     }

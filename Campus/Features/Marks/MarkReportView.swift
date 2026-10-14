@@ -17,6 +17,7 @@ struct MarkReportView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.canvas.ignoresSafeArea())
         .navigationTitle("Mark Report")
+        .sampleDataTitle("Mark Report")
         .navigationBarTitleDisplayMode(.inline)
         .navyNavigationBar()
         .task { await viewModel.loadSemesters() }
